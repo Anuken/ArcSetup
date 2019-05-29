@@ -1,0 +1,72 @@
+package %PACKAGE%;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+
+import static %PACKAGE%.Vars.*;
+import %PACKAGE%.GameState.State;
+import io.anuke.ucore.input.Input;
+import io.anuke.ucore.core.Inputs;
+import io.anuke.ucore.core.Core;
+import io.anuke.ucore.core.KeyBinds;
+import io.anuke.ucore.core.Settings;
+import io.anuke.ucore.entities.EntityPhysics;
+import io.anuke.ucore.entities.EntityDraw;
+import io.anuke.ucore.entities.Entities;
+import io.anuke.ucore.util.Atlas;
+import io.anuke.ucore.modules.RendererModule;
+
+public class Control extends RendererModule{
+	
+	public Control(){
+	    Core.batch = new SpriteBatch();
+		Core.atlas = new Atlas("sprites.atlas");
+	
+		KeyBinds.defaults(
+			"up", Input.W,
+			"left", Input.A,
+			"down", Input.S,
+			"right", Input.D,
+			"pause", Input.ESCAPE
+		);
+		
+		Settings.loadAll("%PACKAGE%");
+
+		EntityPhysics.initPhysics();
+	}
+
+	public void reset(){
+	    //TODO reset game state
+	}
+	
+	@Override
+	public void update(){
+		
+		//TODO remove
+		if(Inputs.keyDown(Input.ESCAPE)){
+			Gdx.app.exit();
+        }
+		
+		if(GameState.is(State.playing)){
+			setCamera(0, 0);
+			
+			if(Inputs.keyTap("pause")){
+				GameState.set(State.paused);
+				ui.paused.show();
+			}
+		}else if(GameState.is(State.paused)){
+			if(Inputs.keyTap("pause")){
+				GameState.set(State.playing);
+				ui.paused.hide();
+			}
+		}
+		
+		Entities.update();
+		drawDefault();
+	}
+	
+	@Override
+	public void draw(){
+		EntityDraw.draw();
+	}
+}

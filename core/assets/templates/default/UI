@@ -1,0 +1,12 @@
+package %PACKAGE%;
+
+import io.anuke.ucore.modules.SceneModule;
+
+public class UI extends SceneModule{
+	
+	@Override
+	public void init(){
+		
+	}
+	
+}

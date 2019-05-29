@@ -1,0 +1,32 @@
+package %PACKAGE%.dialogs;
+
+import io.anuke.ucore.scene.ui.Dialog;
+import %PACKAGE%.GameState;
+import %PACKAGE%.GameState.State;
+import static %PACKAGE%.Vars.*;
+
+public class PausedDialog extends Dialog{
+
+    public PausedDialog(){
+        super("Paused");
+
+        content().defaults().width(200);
+
+        content().addButton("Resume", () -> {
+            GameState.set(State.playing);
+            ui.paused.hide();
+        });
+        content().row();
+
+        content().addButton("Settings", ui.settings::show);
+        content().row();
+
+        content().addButton("Controls", ui.keybind::show);
+        content().row();
+
+        content().addButton("Back to Menu", () -> {
+            hide();
+            GameState.set(State.menu);
+        });
+    }
+}

@@ -1,0 +1,7 @@
+project(":%NAME%"){
+    %PLUGINS%
+
+    dependencies{
+        %DEPENDENCIES%
+    }
+}

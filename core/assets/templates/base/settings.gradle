@@ -1,0 +1,13 @@
+def use = { String name, String path ->
+    include(name)
+    project(name).projectDir = new File(settingsDir, path)
+}
+
+use(':Arc', '../Arc')
+use(':Arc:arc-core', '../Arc/arc-core')
+use(':Arc:extensions', '../Arc/extensions')
+use(':Arc:backends', '../Arc/backends')
+//#PROJECT_DESKTOP use(':Arc:backends:backend-lwjgl3', '../Arc/backends/backend-lwjgl3')
+//#PROJECT_ANDROID use(':Arc:backends:backend-android', '../Arc/backends/backend-android')
+//#PROJECT_IOS use(':Arc:backends:backend-robovm', '../Arc/backends/backend-robovm')
+//#PROJECT_HTML use(':Arc:backends:backend-gwt', '../Arc/backends/backend-gwt')

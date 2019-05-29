@@ -1,0 +1,6 @@
+package %PACKAGE%;
+
+public class Vars{
+	public static Control control;
+	public static UI ui;
+}

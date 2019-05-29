@@ -1,0 +1,26 @@
+package %PACKAGE%;
+
+import com.badlogic.gdx.graphics.Color;
+
+import io.anuke.ucore.graphics.Draw;
+import io.anuke.ucore.core.Effects.Effect;
+import io.anuke.ucore.graphics.Fill;
+import io.anuke.ucore.graphics.Lines;
+
+public class Fx{
+	public static final Effect
+
+	explosion = new Effect(10, e -> {
+		Draw.color(Color.YELLOW);
+		Fill.circle(e.x, e.y, 20 * e.fin());
+		Draw.reset();
+	}),
+
+	hit = new Effect(10, e -> {
+		Lines.stroke(3f);
+		Draw.color(Color.WHITE, Color.ORANGE, e.fin());
+		Lines.spikes(e.x, e.y, 5 + e.fin() * 40f, 10, 8);
+		Draw.reset();
+	});
+	
+}
