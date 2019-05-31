@@ -6,6 +6,8 @@ import io.anuke.arc.backends.lwjgl3.Lwjgl3Graphics;
 import io.anuke.arc.collection.Array;
 import io.anuke.arc.graphics.Color;
 import io.anuke.arc.graphics.g2d.SpriteBatch;
+import io.anuke.arc.scene.Scene;
+import io.anuke.arc.scene.Skin;
 import io.anuke.arc.scene.ui.*;
 import io.anuke.arc.scene.ui.layout.Table;
 import io.anuke.arc.setup.DependencyBank.ProjectDependency;
@@ -23,6 +25,11 @@ public class UI implements ApplicationListener{
 	Label buildLabel;
 
 	public UI(){
+		Core.batch = new SpriteBatch();
+		Core.scene = new Scene(new Skin(Core.files.internal("ui/uiskin.json")));
+
+		Core.input.addProcessor(Core.scene);
+
 		setup.appName = "Test";
 		setup.packageName = "test";
 		setup.outputDir = "/home/anuke/Projects/Test";
@@ -31,8 +38,6 @@ public class UI implements ApplicationListener{
 		setup.dependencies = Array.with(ProjectDependency.arc);
 		setup.sdkLocation = "/home/anuke/Android/Sdk";
 		setup.callback = this::printlog;
-
-		Core.batch = new SpriteBatch();
 	}
 	
 	@Override
@@ -41,6 +46,7 @@ public class UI implements ApplicationListener{
 		Core.graphics.setContinuousRendering(false);
 
 		Core.scene.table("button", t -> {
+			t.defaults().pad(10f);
 
 			t.row();
 
@@ -50,15 +56,19 @@ public class UI implements ApplicationListener{
 				prefs.defaults().padTop(8);
 
 				prefs.add("Name: ").left();
-				prefs.addField(setup.appName, name -> setup.appName = name).width(fw);
+				prefs.addField(setup.appName, name -> {
+					setup.appName = name;
+					setup.outputDir = "/home/anuke/Projects/" + name;
+					setup.packageName = name.toLowerCase();
+				}).width(fw);
 				prefs.row();
 
 				prefs.add("Package: ").left();
-				prefs.addField(setup.packageName, name -> setup.packageName = name).width(fw);
+				prefs.addField(setup.packageName, name -> setup.packageName = name).update(f -> f.setText(setup.packageName)).width(fw);
 				prefs.row();
 
 				prefs.add("Destination: ");
-				prefs.addField(setup.outputDir, name -> setup.outputDir = name).width(fw);
+				prefs.addField(setup.outputDir, name -> setup.outputDir = name).update(f -> f.setText(setup.outputDir)).width(fw);
 			});
 
 			t.row();
@@ -101,48 +111,14 @@ public class UI implements ApplicationListener{
 
 			}).fillX();
 
-			t.row();
-
-			t.table("button", ext -> {
-				ext.margin(14);
-
-				ext.add("Extensions:").left().padBottom(6);
-
-				ext.row();
-
-				ProjectDependency[] depend = ProjectDependency.values();
-				int amount = ProjectDependency.values().length;
-				int max = 5;
-
-				Table current = new Table();
-
-				ext.add(current);
-
-				for(int i = 0 ; i < amount; i ++){
-					if(i % max == 0){
-						current.row();
-					}
-
-					int idx = i;
-
-					current.addCheck(Strings.capitalize(depend[i].name().toLowerCase()),
-					setup.dependencies.contains(depend[i]), b -> {
-						if(b){
-							if(!setup.dependencies.contains(depend[idx])) setup.dependencies.add(depend[idx]);
-						}else{
-							setup.dependencies.remove(depend[idx]);
-						}
-					}).left().pad(4).padLeft(0);
-				}
-
-			}).fillX();
+			//refer to initial commit to get the extensions menu out
 
 			t.row();
 
 			t.addButton("Generate", this::generate).padTop(10).fill().height(60);
 		});
 
-		Core.scene.table(t -> t.top().add("uCore Project Setup").padTop(12).color(Color.CORAL).get().setFontScale(1f));
+		Core.scene.table(t -> t.top().table("button", h -> h.add("Arc Project Setup").color(Color.CORAL).get().setFontScale(1f)).growX().height(50f));
 
 		Core.scene.table(t -> {
 			float sz = 50;

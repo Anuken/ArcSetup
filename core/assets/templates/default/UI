@@ -1,12 +1,34 @@
 package %PACKAGE%;
 
-import io.anuke.ucore.modules.SceneModule;
+import io.anuke.arc.ApplicationListener;
+import io.anuke.arc.Core;
+import io.anuke.arc.util.Time;
+import io.anuke.arc.scene.Scene;
+import io.anuke.arc.scene.Skin;
+import io.anuke.arc.graphics.Color;
+import io.anuke.arc.graphics.g2d.SpriteBatch;
 
-public class UI extends SceneModule{
+public class UI implements ApplicationListener{
 	
 	@Override
 	public void init(){
-		
+        Core.batch = new SpriteBatch();
+        Core.scene = new Scene(new Skin(Core.files.internal("ui/uiskin.json")));
+        Core.input.addProcessor(Core.scene);
+        Core.input.setCatch(KeyCode.BACK, true);
 	}
-	
+
+	@Override
+    public void resize(int width, int height){
+        Core.scene.resize(width, height);
+    }
+
+    @Override
+    public void update(){
+        Time.update();
+
+        Core.graphics.clear(Color.BLACK);
+        Core.scene.act();
+        Core.scene.draw();
+    }
 }

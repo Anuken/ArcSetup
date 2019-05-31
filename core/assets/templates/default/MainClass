@@ -1,13 +1,13 @@
 package %PACKAGE%;
 
-import io.anuke.ucore.modules.ModuleCore;
+import io.anuke.arc.ApplicationCore;
 
 public class %MAIN_CLASS% extends ModuleCore {
+    public static UI ui;
 	
 	@Override
-	public void init(){
-		module(Vars.control = new Control());
-		module(Vars.ui = new UI());
+	public void setup(){
+		add(ui = new UI());
 	}
 	
 }
