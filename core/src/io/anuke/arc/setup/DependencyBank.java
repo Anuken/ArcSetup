@@ -5,7 +5,7 @@ import io.anuke.arc.collection.ObjectMap;
 public class DependencyBank{
     //Versions
     static String roboVMVersion = "2.3.0";
-    static String buildToolsVersion = "28.0.1";
+    static String buildToolsVersion = "28.0.3";
     static String androidAPILevel = "28";
     static String gwtVersion = "2.8.0";
 
@@ -40,7 +40,7 @@ public class DependencyBank{
     public enum ProjectType{
         core(null, "java"),
         desktop(null, "java"),
-        android(androidPluginImport, "android"),
+        android(androidPluginImport, "com.android.application"),
         ios(roboVMPluginImport, "java", "robovm"),
         html(gwtPluginImport, "gwt", "war");
 

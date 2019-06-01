@@ -6,6 +6,7 @@ import io.anuke.arc.files.FileHandle;
 import io.anuke.arc.function.Consumer;
 import io.anuke.arc.setup.DependencyBank.ProjectDependency;
 import io.anuke.arc.setup.DependencyBank.ProjectType;
+import io.anuke.arc.util.Log;
 
 import java.io.*;
 import java.util.*;
@@ -13,13 +14,14 @@ import java.util.*;
 public class ArcSetup{
     public Array<ProjectType> modules = new Array<>();
     public Array<ProjectDependency> dependencies = new Array<>();
-    public String template, outputDir, appName, packageName, mainClass, sdkLocation;
+    public String template, outputDir, appName, packageName, sdkLocation;
     public Consumer<String> callback = System.out::print;
     public Array<String> gradleArgs = new Array<>();
 
     public void build(){
         Project project = new Project();
 
+        String mainClass = appName;
         String packageDir = packageName.replace('.', '/');
         String sdkPath = sdkLocation.replace('\\', '/');
 
@@ -29,21 +31,28 @@ public class ArcSetup{
 
         FileHandle tmpSettings = Core.files.external(".tmp/arc-setup-settings.gradle");
         FileHandle tmpBuild = Core.files.external(".tmp/arc-setup-build.gradle");
-        tmpSettings.writeString("include " + modules.map(type -> "'" + type.name() + "'").toString(", ") + "\n" + Core.files.internal("templates/base/settings.gradle").readString());
+        String setBase = Array.with(Core.files.internal("templates/base/settings.gradle").readString().split("\n"))
+            .select(s -> !s.startsWith("//#") || modules.contains(mod -> mod.name().equalsIgnoreCase(s.substring(0, s.indexOf(" ")).substring("//#PROJECT_".length()))))
+            .map(s -> s.startsWith("//#") ? s.substring(s.indexOf(" ") + 1) : s).toString("\n");
+
+        tmpSettings.writeString("include " + modules.toString(", ", m -> "'" + m.name() + "'") + "\n\n" + setBase);
 
         String ptemplate = Core.files.internal("templates/base/project_template").readString();
 
         StringBuilder buildString = new StringBuilder(Core.files.internal("templates/base/build.gradle").readString()
-            .replace("%CLASSPATH_PLUGINS%", modules.map(type -> type.classpathPlugin).reduce("", (name, str) -> name == null ? str : str + "classpath '" + name + "'\n")));
+            .replace("%APPNAME%", appName)
+            .replace("//%CLASSPATH_PLUGINS%", modules.map(type -> type.classpathPlugin).reduce("", (name, str) -> name == null ? str : str + "\n\tclasspath '" + name + "'").substring(2)));
 
         for(ProjectType ptype : modules){
-            buildString.append(ptemplate
-                .replace("%PLUGINS%", Array.with(ptype.plugins).reduce("", (plugin, str) -> str + "\napply plugin: \"" + plugin + "\"")
-                .replace("%DEPENDENCIES%", (ptype == ProjectType.core ? "" : "implementation project(\":core\")")  +
-                    dependencies.reduce("", (dependency, str) -> !dependency.dependencies.containsKey(ptype) ? str :
-                    Array.with(dependency.dependencies.get(ptype)).reduce("", (bstr, dep) -> "\n" + bstr +
+            buildString.append("\n").append(ptemplate
+                .replace("%NAME%", ptype.name())
+                .replace("%PLUGINS%", Array.with(ptype.plugins).reduce("", (plugin, str) -> str + "\n\tapply plugin: \"" + plugin + "\"").substring(2)
+                        + (ptype == ProjectType.android ? "\n\n\tconfigurations{ natives }" : ""))
+                .replace("%DEPENDENCIES%", (ptype == ProjectType.core ? "" : "implementation project(\":core\")\n\t\t")  +
+                    dependencies.reduce("", (dependency, str) -> (!dependency.dependencies.containsKey(ptype) ? str :
+                    Array.with(dependency.dependencies.get(ptype)).reduce("", (dep, bstr) -> bstr + "\n\t\t" +
                     ((ptype == ProjectType.android && dep.contains("native")) ? "natives \"" + dep + "\"" :
-                    dep.contains("arc ") ? "implementation arcModule(\"" + dep.replace("arc ", "") + "\")" : "implementation \"" + dep + "\""))))));
+                    dep.contains("arc ") ? "implementation arcModule(\"" + dep.replace("arc ", "") + "\")" : "implementation \"" + dep + "\"")))).substring(3)));
         }
 
         tmpBuild.writeString(buildString.toString());
@@ -52,7 +61,7 @@ public class ArcSetup{
 
         // root dir/gradle files
         project.files.add(new ProjectFile(template, "gitignore", ".gitignore", false));
-        project.files.add(new TemporaryProjectFile(template, tmpSettings.file(), "settings.gradle", false));
+        project.files.add(new TemporaryProjectFile(template, tmpSettings.file(), "settings.gradle", true));
         project.files.add(new TemporaryProjectFile(template, tmpBuild.file(), "build.gradle", true));
         project.files.add(new ProjectFile(template, "gradlew", false));
         project.files.add(new ProjectFile(template, "gradlew.bat", false));
@@ -120,7 +129,6 @@ public class ArcSetup{
             project.files.add(new ProjectFile(template, "html/build.gradle"));
             project.files.add(new ProjectFile(template, "html/src/HtmlLauncher", "html/src/" + packageDir + "/client/HtmlLauncher.java", true));
             project.files.add(new ProjectFile(template, "html/GdxDefinition", "html/src/" + packageDir + "/GdxDefinition.gwt.xml", true));
-            project.files.add(new ProjectFile(template, "html/GdxDefinitionSuperdev", "html/src/" + packageDir + "/GdxDefinitionSuperdev.gwt.xml", true));
             project.files.add(new ProjectFile(template, "html/war/index", "html/webapp/index.html", true));
             project.files.add(new ProjectFile(template, "html/war/styles.css", "html/webapp/styles.css", false));
             project.files.add(new ProjectFile(template, "html/war/soundmanager2-jsmin.js", "html/webapp/soundmanager2-jsmin.js", false));
@@ -198,13 +206,13 @@ public class ArcSetup{
             if(isTemp){
                 txt = new FileHandle(((TemporaryProjectFile)file).file).readString();
             }else{
-                txt = new FileHandle(file.resourceName + file.resourceLoc).readString();
+                txt = new FileHandle(file.resourceLoc + "/" + file.resourceName).readString();
             }
 
             txt = replace(txt, values);
             outFile.writeString(txt);
         }else{
-            Core.files.internal(file.resourceName + "/" + file.resourceLoc).copyTo(outFile);
+            Core.files.internal(file.resourceLoc + "/" + file.resourceName).copyTo(outFile);
         }
     }
 
